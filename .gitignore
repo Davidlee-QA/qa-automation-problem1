@@ -1,0 +1,17 @@
+# Build and report output
+target/
+allure-results/
+allure-report/
+screenshots/
+
+# IDE metadata
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS and local files
+.DS_Store
+*.log
