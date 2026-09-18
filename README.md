@@ -342,6 +342,10 @@ invalidLoginShowsUsefulError-firefox-20260917-103000-001.png
 ```
 
 The same screenshot is also attached to the failed test in Allure.
+In the Allure UI, open the failed test detail and click the `Failure screenshot`
+attachment to view it. `Global Attachments` can still show `0` because these
+screenshots are stored on individual failed test results, not as global
+attachments.
 
 The standard TestNG suites also include two intentional failure demo tests:
 
