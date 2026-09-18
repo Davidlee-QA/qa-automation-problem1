@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="SauceDemo Screenshot Failure Demo"
+       parallel="false"
+       verbose="1">
+
+    <test name="Screenshot Demo Browser">
+        <parameter name="browser" value="chrome"/>
+        <classes>
+            <class name="com.qa.homework.failures.FailureScreenshotTest"/>
+        </classes>
+    </test>
+</suite>

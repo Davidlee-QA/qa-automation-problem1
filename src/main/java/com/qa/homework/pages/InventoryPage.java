@@ -13,16 +13,20 @@ import java.util.stream.Collectors;
 
 public class InventoryPage extends BasePage {
 
-    private final By inventoryContainer = By.id("inventory_container");
-    private final By inventoryItems = By.cssSelector(".inventory_item");
-    private final By cartLink = By.cssSelector("[data-test='shopping-cart-link']");
-    private final By cartBadge = By.cssSelector("[data-test='shopping-cart-badge']");
-    private final By cartContents = By.id("cart_contents_container");
-    private final By productSort = By.cssSelector("[data-test='product-sort-container']");
+    private static final By INVENTORY_CONTAINER = By.id("inventory_container");
+    private static final By INVENTORY_ITEMS = By.cssSelector(".inventory_item");
+    private static final By PRODUCT_NAME = By.cssSelector(".inventory_item_name");
+    private static final By PRODUCT_PRICE = By.cssSelector(".inventory_item_price");
+    private static final By PRODUCT_IMAGE = By.tagName("img");
+    private static final By PRODUCT_ACTION_BUTTON = By.tagName("button");
+    private static final By CART_LINK = By.cssSelector("[data-test='shopping-cart-link']");
+    private static final By CART_BADGE = By.cssSelector("[data-test='shopping-cart-badge']");
+    private static final By CART_CONTENTS = By.id("cart_contents_container");
+    private static final By PRODUCT_SORT = By.cssSelector("[data-test='product-sort-container']");
 
     public boolean isLoaded() {
-        wait.until(ExpectedConditions.visibilityOfElementLocated(inventoryContainer));
-        return isDisplayed(inventoryContainer);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(INVENTORY_CONTAINER));
+        return isDisplayed(INVENTORY_CONTAINER);
     }
 
     public InventoryPage addProduct(String productName) {
@@ -55,40 +59,36 @@ public class InventoryPage extends BasePage {
     }
 
     public int productCount() {
-        wait.until(ExpectedConditions.numberOfElementsToBeMoreThan(inventoryItems, 0));
-        return driver.findElements(inventoryItems).size();
+        return productElements().size();
     }
 
     public List<String> productNames() {
-        wait.until(ExpectedConditions.numberOfElementsToBeMoreThan(inventoryItems, 0));
-        return driver.findElements(inventoryItems).stream()
-                .map(product -> product.findElement(By.cssSelector(".inventory_item_name")).getText())
+        return productElements().stream()
+                .map(this::productName)
                 .collect(Collectors.toList());
     }
 
     public List<Double> productPrices() {
-        wait.until(ExpectedConditions.numberOfElementsToBeMoreThan(inventoryItems, 0));
-        return driver.findElements(inventoryItems).stream()
-                .map(product -> product.findElement(By.cssSelector(".inventory_item_price")).getText())
+        return productElements().stream()
+                .map(this::productPrice)
                 .map(this::parsePrice)
                 .collect(Collectors.toList());
     }
 
     public long uniqueProductImageCount() {
-        wait.until(ExpectedConditions.numberOfElementsToBeMoreThan(inventoryItems, 0));
-        return driver.findElements(inventoryItems).stream()
-                .map(product -> product.findElement(By.tagName("img")).getAttribute("src"))
+        return productElements().stream()
+                .map(this::productImageSource)
                 .distinct()
                 .count();
     }
 
     public InventoryPage sortByPriceLowToHigh() {
-        new Select(visible(productSort)).selectByVisibleText("Price (low to high)");
+        new Select(visible(PRODUCT_SORT)).selectByVisibleText("Price (low to high)");
         return this;
     }
 
     public String selectedSortOption() {
-        return new Select(visible(productSort)).getFirstSelectedOption().getText();
+        return new Select(visible(PRODUCT_SORT)).getFirstSelectedOption().getText();
     }
 
     public boolean sortingErrorAlertIsShown() {
@@ -104,11 +104,11 @@ public class InventoryPage extends BasePage {
     }
 
     public int cartCount() {
-        return Integer.parseInt(text(cartBadge));
+        return Integer.parseInt(text(CART_BADGE));
     }
 
     public int cartCountOrZero() {
-        if (driver.findElements(cartBadge).isEmpty()) {
+        if (driver.findElements(CART_BADGE).isEmpty()) {
             return 0;
         }
         return cartCount();
@@ -124,13 +124,7 @@ public class InventoryPage extends BasePage {
     }
 
     public CartPage openCart() {
-        try {
-            click(cartLink);
-            wait.until(ExpectedConditions.visibilityOfElementLocated(cartContents));
-        } catch (TimeoutException e) {
-            clickWithJavaScript(cartLink);
-            wait.until(ExpectedConditions.visibilityOfElementLocated(cartContents));
-        }
+        clickAndWaitFor(CART_LINK, CART_CONTENTS);
         return new CartPage();
     }
 
@@ -138,15 +132,31 @@ public class InventoryPage extends BasePage {
         return Double.parseDouble(price.replace("$", "").trim());
     }
 
+    private List<WebElement> productElements() {
+        wait.until(ExpectedConditions.numberOfElementsToBeMoreThan(INVENTORY_ITEMS, 0));
+        return driver.findElements(INVENTORY_ITEMS);
+    }
+
+    private String productName(WebElement product) {
+        return product.findElement(PRODUCT_NAME).getText();
+    }
+
+    private String productPrice(WebElement product) {
+        return product.findElement(PRODUCT_PRICE).getText();
+    }
+
+    private String productImageSource(WebElement product) {
+        return product.findElement(PRODUCT_IMAGE).getAttribute("src");
+    }
+
+    private WebElement productActionButton(WebElement product) {
+        return product.findElement(PRODUCT_ACTION_BUTTON);
+    }
+
     private WebElement productButton(String productName) {
-        wait.until(ExpectedConditions.numberOfElementsToBeMoreThan(inventoryItems, 0));
-        List<WebElement> products = driver.findElements(inventoryItems);
-
-        for (WebElement product : products) {
-            String name = product.findElement(By.cssSelector(".inventory_item_name")).getText();
-
-            if (name.equals(productName)) {
-                return product.findElement(By.tagName("button"));
+        for (WebElement product : productElements()) {
+            if (productName(product).equals(productName)) {
+                return productActionButton(product);
             }
         }
 

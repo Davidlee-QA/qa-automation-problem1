@@ -132,5 +132,13 @@
                 <headless>false</headless>
             </properties>
         </profile>
+
+        <profile>
+            <id>screenshot-demo</id>
+            <properties>
+                <suiteXmlFile>testng-screenshot-demo.xml</suiteXmlFile>
+                <headless>false</headless>
+            </properties>
+        </profile>
     </profiles>
 </project>

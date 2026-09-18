@@ -115,7 +115,7 @@ Selenium Manager resolves the compatible driver automatically.
 # 2. Clone and open the project
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/Davidlee-QA/qa-automation-problem1.git
 cd qa-automation-problem1
 ```
 
@@ -343,6 +343,28 @@ invalidLoginShowsUsefulError-firefox-20260917-103000-001.png
 
 The same screenshot is also attached to the failed test in Allure.
 
+The standard TestNG suites also include two intentional failure demo tests:
+
+```text
+com.qa.homework.failures.FailureScreenshotTest
+```
+
+This means a normal run is expected to finish with two failed tests on a single
+browser, only to verify failure screenshots:
+
+```bash
+mvn test -Psingle-browser -Dbrowser=chrome -Dheadless=true
+```
+
+Expected screenshot examples:
+
+```text
+target/screenshots/demoFailureOnInventoryPageCreatesScreenshot-chrome-*.png
+target/screenshots/demoFailureOnCartPageCreatesScreenshot-chrome-*.png
+```
+
+For cross-browser runs, the same two demo failures run once per browser.
+
 The Allure lifecycle listener is registered through Java SPI under
 `src/test/resources/META-INF/services`, while `BaseTest` registers Allure's
 TestNG listener. Screenshots are captured for both suite XML runs and direct
@@ -463,6 +485,10 @@ mvn -B clean test \
   -Dbrowser=<chrome|firefox> \
   -Dheadless=true
 ```
+
+Because the single-browser suite includes the screenshot demo tests, this
+workflow is expected to upload failure screenshots and finish with intentional
+test failures while the demo tests remain enabled.
 
 This provides browser isolation at the CI worker level.
 
@@ -704,18 +730,3 @@ mvn allure:serve
 ```
 
 ---
-
-## Notes for the reviewer
-
-This implementation intentionally separates:
-
-- browser lifecycle,
-- configuration,
-- page objects,
-- test logic,
-- failure evidence,
-- local parallelism,
-- and CI parallelism.
-
-The goal is to keep the homework small enough to review while demonstrating a
-framework structure that can scale beyond two UI test classes.

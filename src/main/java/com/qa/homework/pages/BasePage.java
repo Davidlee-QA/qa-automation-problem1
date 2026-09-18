@@ -36,6 +36,25 @@ public abstract class BasePage {
         clickable(locator).click();
     }
 
+    protected void clickAndWaitFor(By button, By destination) {
+        try {
+            click(button);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(destination));
+        } catch (TimeoutException e) {
+            clickWithJavaScript(button);
+            try {
+                wait.until(ExpectedConditions.visibilityOfElementLocated(destination));
+            } catch (TimeoutException retryFailure) {
+                throw new TimeoutException(
+                        "Timed out after clicking " + button
+                                + " and waiting for " + destination
+                                + ". Current URL: " + driver.getCurrentUrl()
+                                + ". Page text: " + pageText(),
+                        retryFailure);
+            }
+        }
+    }
+
     protected void clickWithJavaScript(By locator) {
         WebElement element = visible(locator);
         clickWithJavaScript(element);
@@ -90,5 +109,12 @@ public abstract class BasePage {
     protected boolean isDisplayed(By locator) {
         return !driver.findElements(locator).isEmpty()
                 && driver.findElement(locator).isDisplayed();
+    }
+
+    private String pageText() {
+        String text = driver.findElement(By.tagName("body")).getText()
+                .replaceAll("\\s+", " ")
+                .trim();
+        return text.length() > 500 ? text.substring(0, 500) + "..." : text;
     }
 }

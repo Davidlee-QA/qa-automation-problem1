@@ -8,6 +8,7 @@
         <parameter name="browser" value="chrome"/>
         <packages>
             <package name="com.qa.homework.tests"/>
+            <package name="com.qa.homework.failures"/>
         </packages>
     </test>
 </suite>

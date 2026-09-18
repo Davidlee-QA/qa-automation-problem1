@@ -4,38 +4,38 @@ import org.openqa.selenium.By;
 
 public class LoginPage extends BasePage {
 
-    private final By usernameInput = By.id("user-name");
-    private final By passwordInput = By.id("password");
-    private final By loginButton = By.id("login-button");
-    private final By errorMessage = By.cssSelector("[data-test='error']");
+    private static final By USERNAME_INPUT = By.id("user-name");
+    private static final By PASSWORD_INPUT = By.id("password");
+    private static final By LOGIN_BUTTON = By.id("login-button");
+    private static final By ERROR_MESSAGE = By.cssSelector("[data-test='error']");
 
     public LoginPage enterUsername(String username) {
-        type(usernameInput, username);
+        type(USERNAME_INPUT, username);
         return this;
     }
 
     public LoginPage enterPassword(String password) {
-        type(passwordInput, password);
+        type(PASSWORD_INPUT, password);
         return this;
     }
 
     public LoginPage clickLoginExpectingFailure() {
-        click(loginButton);
+        click(LOGIN_BUTTON);
         return this;
     }
 
     public InventoryPage loginAs(String username, String password) {
         enterUsername(username);
         enterPassword(password);
-        click(loginButton);
+        click(LOGIN_BUTTON);
         return new InventoryPage();
     }
 
     public String getErrorMessage() {
-        return text(errorMessage);
+        return text(ERROR_MESSAGE);
     }
 
     public boolean isLoaded() {
-        return isDisplayed(loginButton);
+        return isDisplayed(LOGIN_BUTTON);
     }
 }
