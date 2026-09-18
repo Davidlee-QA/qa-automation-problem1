@@ -517,13 +517,12 @@ Each job executes:
 mvn -B clean test \
   -Psingle-browser \
   -Dbrowser=<chrome|firefox> \
-  -Dheadless=true \
-  -DexcludedGroups=screenshot-demo
+  -Dheadless=true
 ```
 
-The CI workflow excludes the intentional `screenshot-demo` group so pull
-requests and pushes fail only on real regressions. The demo failure tests remain
-available for local screenshot verification.
+The CI workflow intentionally runs the `screenshot-demo` group too, so each
+browser job is expected to include the two demo failures. The workflow still
+generates and uploads Allure reports and failure screenshots with `if: always()`.
 
 This provides browser isolation at the CI worker level.
 
