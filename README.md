@@ -370,17 +370,37 @@ Generate a static HTML report:
 mvn allure:report
 ```
 
-Open the generated report:
-
-```text
-target/site/allure-maven-plugin/index.html
-```
-
-Or start the local Allure report server:
+Serve the generated report:
 
 ```bash
 mvn allure:serve
 ```
+
+Or serve the generated static report with a local HTTP server:
+
+```bash
+cd target/site/allure-maven-plugin
+python3 -m http.server 8080
+```
+
+Then open `http://localhost:8080`.
+
+Do not double-click `target/site/allure-maven-plugin/index.html` directly for
+the multi-file report. Browsers can block Allure's local `file://` requests for
+`data/*.json`, which leaves the page stuck on a loader or an empty result view.
+
+If you need a report that can be opened directly as a downloaded file, generate
+the single-file report:
+
+```bash
+mvn allure:report
+target/.allure/bin/allure awesome target/allure-results \
+  --output target/allure-single-file-report \
+  --single-file \
+  --report-name "SauceDemo UI Tests"
+```
+
+Then open `target/allure-single-file-report/index.html`.
 
 Maven Surefire is still used as the test runner, but the reviewable report for
 local and CI runs is Allure.
@@ -490,9 +510,16 @@ After a GitHub Actions run:
 4. Download:
    - `allure-report-chrome`
    - `allure-report-firefox`
-5. If a job fails and a screenshot exists, download:
+5. Extract the artifact ZIP.
+6. Open `index.html`.
+7. If a job fails and a screenshot exists, download:
    - `screenshots-chrome`
    - or `screenshots-firefox`
+
+The CI report artifact is generated with Allure's `--single-file` option, so
+its `index.html` can be opened directly after download. If you generate the
+default multi-file report locally, serve it through `mvn allure:serve` or
+`python3 -m http.server` instead of opening the file directly.
 
 ---
 

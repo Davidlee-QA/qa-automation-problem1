@@ -36,14 +36,19 @@ jobs:
 
       - name: Generate Allure report
         if: always()
-        run: mvn -B allure:report
+        run: |
+          mvn -B allure:report
+          target/.allure/bin/allure awesome target/allure-results \
+            --output target/allure-single-file-report \
+            --single-file \
+            --report-name "SauceDemo ${{ matrix.browser }} UI Tests"
 
       - name: Upload Allure report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-report-${{ matrix.browser }}
-          path: target/site/allure-maven-plugin
+          path: target/allure-single-file-report
           if-no-files-found: ignore
 
       - name: Upload failure screenshots
