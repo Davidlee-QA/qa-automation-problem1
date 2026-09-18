@@ -1,14 +1,15 @@
-package com.qa.homework.pages;
+package com.qa.homework.pages.cart.actions;
 
-import org.openqa.selenium.By;
+import com.qa.homework.pages.BasePage;
+import com.qa.homework.pages.checkout.page.CheckoutPage;
 import org.openqa.selenium.TimeoutException;
 
-public class CartPage extends BasePage {
+import static com.qa.homework.pages.cart.locators.CartLocators.CART_CONTENTS;
+import static com.qa.homework.pages.cart.locators.CartLocators.CART_ITEM_NAMES;
+import static com.qa.homework.pages.cart.locators.CartLocators.CHECKOUT_BUTTON;
+import static com.qa.homework.pages.cart.locators.CartLocators.FIRST_NAME_INPUT;
 
-    private static final By CART_CONTENTS = By.id("cart_contents_container");
-    private static final By CART_ITEM_NAMES = By.cssSelector(".cart_item .inventory_item_name");
-    private static final By CHECKOUT_BUTTON = By.id("checkout");
-    private static final By FIRST_NAME_INPUT = By.id("first-name");
+public abstract class CartActions extends BasePage {
 
     public boolean containsProduct(String productName) {
         try {

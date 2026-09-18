@@ -1,181 +1,192 @@
 package com.qa.homework.tests;
 
+import com.qa.homework.assertions.SortOrder;
 import com.qa.homework.base.BaseTest;
 import com.qa.homework.config.Config;
-import com.qa.homework.pages.InventoryPage;
-import com.qa.homework.pages.LoginPage;
+import com.qa.homework.data.LoginDataProvider;
+import com.qa.homework.data.SauceDemoTestData;
+import com.qa.homework.data.SauceDemoTestData.UserCredentials;
+import com.qa.homework.pages.inventory.InventoryPage;
+import com.qa.homework.pages.login.LoginPage;
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.time.Duration;
-import java.util.List;
 
 public class LoginTest extends BaseTest {
 
-    private static final String PASSWORD = "secret_sauce";
-    private static final String INVALID_CREDENTIAL_MESSAGE =
-            "Username and password do not match any user";
-    private static final String LONG_INPUT = "a".repeat(128);
-    private static final int STANDARD_PRODUCT_COUNT = 6;
-
     @Test(groups = {"smoke", "login", "inventory", "baseline"})
-    public void standardUserCanUseBaselineInventoryBehavior() {
-        InventoryPage inventory = new LoginPage()
-                .loginAs("standard_user", PASSWORD);
+    public void standardUserCanOpenInventoryPage() {
+        UserCredentials user = SauceDemoTestData.standardUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                LoginPage.openInventory(user);
 
         Assert.assertTrue(
                 inventory.isLoaded(),
-                "Inventory page should be displayed after successful login for standard_user.");
+                "Inventory page should be displayed after successful login for " + user.username() + ".");
+    }
+
+    @Test(groups = {"smoke", "inventory", "baseline"})
+    public void standardUserSeesStandardProductCatalog() {
+        UserCredentials user = SauceDemoTestData.standardUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                LoginPage.openInventory(user);
+
         Assert.assertEquals(
                 inventory.productCount(),
-                STANDARD_PRODUCT_COUNT,
-                "standard_user should see the standard SauceDemo product catalog.");
+                SauceDemoTestData.standardProductCount(),
+                user.username() + " should see the standard SauceDemo product catalog.");
+    }
+
+    @Test(groups = {"regression", "inventory", "baseline"})
+    public void standardUserSeesUniqueProductImages() {
+        UserCredentials user = SauceDemoTestData.standardUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                LoginPage.openInventory(user);
+
         Assert.assertEquals(
                 inventory.uniqueProductImageCount(),
-                STANDARD_PRODUCT_COUNT,
-                "standard_user should see one unique product image per product.");
+                SauceDemoTestData.standardProductCount(),
+                user.username() + " should see one unique product image per product.");
     }
 
     @Test(groups = {"regression", "login"})
     public void lockedOutUserCannotLogin() {
-        LoginPage loginPage = new LoginPage()
-                .enterUsername("locked_out_user")
-                .enterPassword(PASSWORD)
-                .clickLoginExpectingFailure();
+        UserCredentials user = SauceDemoTestData.lockedOutUser();
+        com.qa.homework.pages.login.page.LoginPage loginPage =
+                LoginPage.failLogin(user.username(), user.password());
 
         Assert.assertTrue(
-                loginPage.getErrorMessage().contains("Sorry, this user has been locked out"),
+                loginPage.getErrorMessage().contains(SauceDemoTestData.lockedOutMessage()),
                 "Locked out user should see a locked account error.");
     }
 
     @Test(groups = {"regression", "inventory", "known-issue"})
-    public void problemUserShowsBrokenImagesAndPartialCartAdds() {
-        InventoryPage inventory = new LoginPage()
-                .loginAs("problem_user", PASSWORD);
+    public void problemUserCanOpenInventoryPage() {
+        UserCredentials user = SauceDemoTestData.problemUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                LoginPage.openInventory(user);
 
         Assert.assertTrue(
                 inventory.isLoaded(),
-                "Inventory page should be displayed after successful login for problem_user.");
+                "Inventory page should be displayed after successful login for " + user.username() + ".");
+    }
+
+    @Test(groups = {"regression", "inventory", "known-issue"})
+    public void problemUserSeesStandardProductCatalog() {
+        UserCredentials user = SauceDemoTestData.problemUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                LoginPage.openInventory(user);
+
         Assert.assertEquals(
                 inventory.productCount(),
-                STANDARD_PRODUCT_COUNT,
-                "problem_user should still load the standard product catalog.");
-        Assert.assertTrue(
-                inventory.uniqueProductImageCount() < STANDARD_PRODUCT_COUNT,
-                "problem_user should expose the known broken image issue.");
+                SauceDemoTestData.standardProductCount(),
+                user.username() + " should still load the standard product catalog.");
+    }
 
-        inventory.attemptToAddAllProducts();
+    @Test(groups = {"regression", "inventory", "known-issue"})
+    public void problemUserShowsBrokenImages() {
+        UserCredentials user = SauceDemoTestData.problemUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                LoginPage.openInventory(user);
 
         Assert.assertTrue(
-                inventory.cartCountOrZero() < STANDARD_PRODUCT_COUNT,
-                "problem_user should expose the known partial add-to-cart issue.");
+                inventory.uniqueProductImageCount() < SauceDemoTestData.standardProductCount(),
+                user.username() + " should expose the known broken image issue.");
+    }
+
+    @Test(groups = {"regression", "cart", "known-issue"})
+    public void problemUserAddsOnlyPartOfCatalogToCart() {
+        UserCredentials user = SauceDemoTestData.problemUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                InventoryPage.inventoryAfterAttemptingAllProductAdds(user);
+
+        Assert.assertTrue(
+                inventory.cartCountOrZero() < SauceDemoTestData.standardProductCount(),
+                user.username() + " should expose the known partial add-to-cart issue.");
+    }
+
+    @Test(groups = {"performance", "login"})
+    public void performanceGlitchUserCanOpenInventoryPage() {
+        UserCredentials user = SauceDemoTestData.performanceGlitchUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                LoginPage.openInventory(user);
+
+        Assert.assertTrue(
+                inventory.isLoaded(),
+                "Inventory page should be displayed after successful login for " + user.username() + ".");
     }
 
     @Test(groups = {"performance", "login"})
     public void performanceGlitchUserCanLoginWithinAcceptableTime() {
-        long start = System.nanoTime();
-
-        InventoryPage inventory = new LoginPage()
-                .loginAs("performance_glitch_user", PASSWORD);
-
-        Assert.assertTrue(
-                inventory.isLoaded(),
-                "Inventory page should be displayed after successful login for performance_glitch_user.");
-
-        long durationSeconds = Duration.ofNanos(System.nanoTime() - start).toSeconds();
+        UserCredentials user = SauceDemoTestData.performanceGlitchUser();
+        long durationSeconds = LoginPage.loginDurationSeconds(user);
         int maxSeconds = Config.performanceLoginMaxSeconds();
 
         Assert.assertTrue(
                 durationSeconds <= maxSeconds,
-                "performance_glitch_user login should finish within "
+                user.username() + " login should finish within "
                         + maxSeconds + " seconds but took " + durationSeconds + " seconds.");
     }
 
     @Test(groups = {"regression", "inventory", "known-issue"})
-    public void errorUserCannotChangeProductSorting() {
-        InventoryPage inventory = new LoginPage()
-                .loginAs("error_user", PASSWORD);
+    public void errorUserCanOpenInventoryPage() {
+        UserCredentials user = SauceDemoTestData.errorUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                LoginPage.openInventory(user);
 
         Assert.assertTrue(
                 inventory.isLoaded(),
-                "Inventory page should be displayed after successful login for error_user.");
+                "Inventory page should be displayed after successful login for " + user.username() + ".");
+    }
 
-        inventory.sortByPriceLowToHigh();
-
+    @Test(groups = {"regression", "inventory", "known-issue"})
+    public void errorUserCannotChangeProductSorting() {
+        UserCredentials user = SauceDemoTestData.errorUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                InventoryPage.inventorySortedByPriceLowToHigh(user);
         boolean sortingIssueIsVisible = inventory.sortingErrorAlertIsShown()
-                || "Name (A to Z)".equals(inventory.selectedSortOption());
+                || SauceDemoTestData.defaultSortOption().equals(inventory.selectedSortOption());
 
         Assert.assertTrue(
                 sortingIssueIsVisible,
-                "error_user should expose the known issue where product sorting is blocked or broken.");
+                user.username() + " should expose the known issue where product sorting is blocked or broken.");
+    }
+
+    @Test(groups = {"visual", "inventory", "known-issue"})
+    public void visualUserCanOpenInventoryPage() {
+        UserCredentials user = SauceDemoTestData.visualUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                LoginPage.openInventory(user);
+
+        Assert.assertTrue(
+                inventory.isLoaded(),
+                "Inventory page should be displayed after successful login for " + user.username() + ".");
     }
 
     @Test(groups = {"visual", "inventory", "known-issue"})
     public void visualUserShowsBrokenLowToHighPriceSorting() {
-        InventoryPage inventory = new LoginPage()
-                .loginAs("visual_user", PASSWORD);
-
-        Assert.assertTrue(
-                inventory.isLoaded(),
-                "Inventory page should be displayed after successful login for visual_user.");
-
-        inventory.sortByPriceLowToHigh();
-        List<Double> prices = inventory.productPrices();
+        UserCredentials user = SauceDemoTestData.visualUser();
+        com.qa.homework.pages.inventory.page.InventoryPage inventory =
+                InventoryPage.inventorySortedByPriceLowToHigh(user);
 
         Assert.assertFalse(
-                isSortedAscending(prices),
-                "visual_user should expose the known visual price sorting issue.");
-    }
-
-    @DataProvider(name = "invalidLoginCases")
-    public Object[][] invalidLoginCases() {
-        return new Object[][]{
-                {"standard_user", "wrong_password", INVALID_CREDENTIAL_MESSAGE},
-                {"unknown_user", PASSWORD, INVALID_CREDENTIAL_MESSAGE},
-                {"", PASSWORD,
-                        "Username is required"},
-                {"standard_user", "",
-                        "Password is required"},
-                {"", "",
-                        "Username is required"},
-                {" standard_user ", PASSWORD, INVALID_CREDENTIAL_MESSAGE},
-                {"standard_user", " " + PASSWORD, INVALID_CREDENTIAL_MESSAGE},
-                {"standard_user", PASSWORD + " ", INVALID_CREDENTIAL_MESSAGE},
-                {"STANDARD_USER", PASSWORD, INVALID_CREDENTIAL_MESSAGE},
-                {"standard_user", "SECRET_SAUCE", INVALID_CREDENTIAL_MESSAGE},
-                {"standard_user@example.com", PASSWORD, INVALID_CREDENTIAL_MESSAGE},
-                {"standard_user!", PASSWORD, INVALID_CREDENTIAL_MESSAGE},
-                {"' OR '1'='1", PASSWORD, INVALID_CREDENTIAL_MESSAGE},
-                {LONG_INPUT, PASSWORD, INVALID_CREDENTIAL_MESSAGE},
-                {"standard_user", LONG_INPUT, INVALID_CREDENTIAL_MESSAGE}
-        };
+                SortOrder.isAscending(inventory.productPrices()),
+                user.username() + " should expose the known visual price sorting issue.");
     }
 
     @Test(
             dataProvider = "invalidLoginCases",
+            dataProviderClass = LoginDataProvider.class,
             groups = {"regression", "login"})
     public void invalidLoginShowsUsefulError(
             String username,
             String password,
             String expectedMessageFragment) {
 
-        LoginPage loginPage = new LoginPage()
-                .enterUsername(username)
-                .enterPassword(password)
-                .clickLoginExpectingFailure();
+        com.qa.homework.pages.login.page.LoginPage loginPage =
+                LoginPage.failLogin(username, password);
 
         Assert.assertTrue(
                 loginPage.getErrorMessage().contains(expectedMessageFragment),
                 "Unexpected login error message.");
-    }
-
-    private boolean isSortedAscending(List<Double> values) {
-        for (int i = 1; i < values.size(); i++) {
-            if (values.get(i - 1) > values.get(i)) {
-                return false;
-            }
-        }
-        return true;
     }
 }

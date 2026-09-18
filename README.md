@@ -63,14 +63,40 @@ qa-automation-problem1/
 │   │   │   └── DriverFactory.java
 │   │   └── pages/
 │   │       ├── BasePage.java
-│   │       ├── LoginPage.java
-│   │       ├── InventoryPage.java
-│   │       ├── CartPage.java
-│   │       └── CheckoutPage.java
+│   │       ├── login/
+│   │       │   ├── actions/LoginActions.java
+│   │       │   ├── locators/LoginLocators.java
+│   │       │   └── page/LoginPage.java
+│   │       ├── inventory/
+│   │       │   ├── actions/InventoryActions.java
+│   │       │   ├── locators/InventoryLocators.java
+│   │       │   └── page/InventoryPage.java
+│   │       ├── cart/
+│   │       │   ├── actions/CartActions.java
+│   │       │   ├── locators/CartLocators.java
+│   │       │   └── page/CartPage.java
+│   │       └── checkout/
+│   │           ├── actions/CheckoutActions.java
+│   │           ├── locators/CheckoutLocators.java
+│   │           └── page/CheckoutPage.java
 │   └── test/
 │       ├── java/com/qa/homework/
+│       │   ├── pages/
+│       │   │   ├── login/LoginPage.java
+│       │   │   ├── inventory/InventoryPage.java
+│       │   │   ├── cart/CartPage.java
+│       │   │   └── checkout/CheckoutPage.java
+│       │   ├── assertions/
+│       │   │   └── SortOrder.java
 │       │   ├── base/
-│       │   │   └── BaseTest.java
+│       │   │   ├── BaseTest.java
+│       │   │   └── TestRunLifecycle.java
+│       │   ├── data/
+│       │   │   ├── CheckoutDataProvider.java
+│       │   │   ├── LoginDataProvider.java
+│       │   │   └── SauceDemoTestData.java
+│       │   ├── failures/
+│       │   │   └── FailureScreenshotTest.java
 │       │   ├── listeners/
 │       │   │   └── ScreenshotListener.java
 │       │   └── tests/
@@ -79,6 +105,9 @@ qa-automation-problem1/
 │       └── resources/
 │           ├── META-INF/services/
 │           │   └── io.qameta.allure.listener.TestLifecycleListener
+│           ├── test-data/
+│           │   ├── invalid-login-cases.csv
+│           │   └── saucedemo-test-data.properties
 │           ├── allure.properties
 │           └── config.properties
 ├── pom.xml
@@ -305,7 +334,7 @@ The test suite currently covers:
 - Overly long username and password values.
 
 The negative login validation cases are data-driven with a TestNG
-`@DataProvider`.
+`@DataProvider` backed by `src/test/resources/test-data/invalid-login-cases.csv`.
 
 ## Cart and checkout
 
@@ -443,9 +472,10 @@ mvn clean test -Dheadless=true
 mvn allure:report
 ```
 
-If Allure shows only one browser while the total count is `28`, check whether
-the `Retry` filter is enabled in the report UI. In the cross-browser run, Chrome
-and Firefox should appear as separate groups with `14` tests each.
+If Allure shows only one browser, check whether the `Retry` filter is enabled in
+the report UI. In the cross-browser run, Chrome and Firefox should appear as
+separate groups, and the total result count should be twice the single-browser
+count.
 
 ---
 
@@ -487,12 +517,13 @@ Each job executes:
 mvn -B clean test \
   -Psingle-browser \
   -Dbrowser=<chrome|firefox> \
-  -Dheadless=true
+  -Dheadless=true \
+  -DexcludedGroups=screenshot-demo
 ```
 
-Because the single-browser suite includes the screenshot demo tests, this
-workflow is expected to upload failure screenshots and finish with intentional
-test failures while the demo tests remain enabled.
+The CI workflow excludes the intentional `screenshot-demo` group so pull
+requests and pushes fail only on real regressions. The demo failure tests remain
+available for local screenshot verification.
 
 This provides browser isolation at the CI worker level.
 
@@ -584,7 +615,21 @@ mvn test -Psingle-browser -Dbrowser=firefox
 
 Selectors and page actions are kept outside tests.
 
+Each page is split into three focused packages:
+
+- `locators`: Selenium selectors only.
+- `actions`: page interactions and page-specific read methods.
+- `page`: the public page object class used by tests and shared test actions.
+
 This makes the tests easier to read and reduces maintenance when the UI changes.
+
+## Test run lifecycle
+
+`BaseTest` runs suite-level setup and cleanup through `TestRunLifecycle`.
+Before a suite starts, it prepares the output directories and clears any stale
+driver state. After the suite finishes, it performs a final WebDriver cleanup.
+Screenshots and Allure results are not deleted during after-suite cleanup because
+they are test artifacts.
 
 ## Explicit waits
 
@@ -613,6 +658,16 @@ browser installations.
 
 TestNG `@DataProvider` keeps multiple validation scenarios maintainable and avoids
 duplicating test methods.
+
+All reusable test data is kept under `src/test/resources/test-data/`. Test
+classes keep only the browser flow and assertions; credentials, products,
+checkout customer data, expected messages, and invalid login rows are loaded
+through `SauceDemoTestData`, `LoginDataProvider`, and `CheckoutDataProvider`.
+
+Shared user flows are kept in test-side page helpers under
+`src/test/java/com/qa/homework/pages/`, such as `LoginPage`, `InventoryPage`,
+`CartPage`, and `CheckoutPage`. Each test method is intentionally small and
+keeps one main assertion so failures point to a single behavior.
 
 ## User-specific SauceDemo coverage
 

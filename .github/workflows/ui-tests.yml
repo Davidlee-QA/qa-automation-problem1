@@ -33,6 +33,7 @@ jobs:
           -Psingle-browser
           -Dbrowser=${{ matrix.browser }}
           -Dheadless=true
+          -DexcludedGroups=screenshot-demo
 
       - name: Generate Allure report
         if: always()

@@ -1,6 +1,7 @@
-package com.qa.homework.pages;
+package com.qa.homework.pages.inventory.actions;
 
-import org.openqa.selenium.By;
+import com.qa.homework.pages.BasePage;
+import com.qa.homework.pages.cart.page.CartPage;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -11,25 +12,25 @@ import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class InventoryPage extends BasePage {
+import static com.qa.homework.pages.inventory.locators.InventoryLocators.CART_BADGE;
+import static com.qa.homework.pages.inventory.locators.InventoryLocators.CART_CONTENTS;
+import static com.qa.homework.pages.inventory.locators.InventoryLocators.CART_LINK;
+import static com.qa.homework.pages.inventory.locators.InventoryLocators.INVENTORY_CONTAINER;
+import static com.qa.homework.pages.inventory.locators.InventoryLocators.INVENTORY_ITEMS;
+import static com.qa.homework.pages.inventory.locators.InventoryLocators.PRODUCT_ACTION_BUTTON;
+import static com.qa.homework.pages.inventory.locators.InventoryLocators.PRODUCT_IMAGE;
+import static com.qa.homework.pages.inventory.locators.InventoryLocators.PRODUCT_NAME;
+import static com.qa.homework.pages.inventory.locators.InventoryLocators.PRODUCT_PRICE;
+import static com.qa.homework.pages.inventory.locators.InventoryLocators.PRODUCT_SORT;
 
-    private static final By INVENTORY_CONTAINER = By.id("inventory_container");
-    private static final By INVENTORY_ITEMS = By.cssSelector(".inventory_item");
-    private static final By PRODUCT_NAME = By.cssSelector(".inventory_item_name");
-    private static final By PRODUCT_PRICE = By.cssSelector(".inventory_item_price");
-    private static final By PRODUCT_IMAGE = By.tagName("img");
-    private static final By PRODUCT_ACTION_BUTTON = By.tagName("button");
-    private static final By CART_LINK = By.cssSelector("[data-test='shopping-cart-link']");
-    private static final By CART_BADGE = By.cssSelector("[data-test='shopping-cart-badge']");
-    private static final By CART_CONTENTS = By.id("cart_contents_container");
-    private static final By PRODUCT_SORT = By.cssSelector("[data-test='product-sort-container']");
+public abstract class InventoryActions<T extends InventoryActions<T>> extends BasePage {
 
     public boolean isLoaded() {
         wait.until(ExpectedConditions.visibilityOfElementLocated(INVENTORY_CONTAINER));
         return isDisplayed(INVENTORY_CONTAINER);
     }
 
-    public InventoryPage addProduct(String productName) {
+    public T addProduct(String productName) {
         int expectedCount = cartCountOrZero() + 1;
         WebElement button = productButton(productName);
 
@@ -41,21 +42,21 @@ public class InventoryPage extends BasePage {
             wait.until(driver -> cartCountOrZero() == expectedCount);
         }
 
-        return this;
+        return self();
     }
 
-    public InventoryPage addAllProducts() {
+    public T addAllProducts() {
         for (String productName : productNames()) {
             addProduct(productName);
         }
-        return this;
+        return self();
     }
 
-    public InventoryPage attemptToAddAllProducts() {
+    public T attemptToAddAllProducts() {
         for (String productName : productNames()) {
             productButton(productName).click();
         }
-        return this;
+        return self();
     }
 
     public int productCount() {
@@ -82,9 +83,9 @@ public class InventoryPage extends BasePage {
                 .count();
     }
 
-    public InventoryPage sortByPriceLowToHigh() {
+    public T sortByPriceLowToHigh() {
         new Select(visible(PRODUCT_SORT)).selectByVisibleText("Price (low to high)");
-        return this;
+        return self();
     }
 
     public String selectedSortOption() {
@@ -118,9 +119,9 @@ public class InventoryPage extends BasePage {
         return wait.until(ExpectedConditions.alertIsPresent()).getText();
     }
 
-    public InventoryPage acceptAlert() {
+    public T acceptAlert() {
         wait.until(ExpectedConditions.alertIsPresent()).accept();
-        return this;
+        return self();
     }
 
     public CartPage openCart() {
@@ -162,4 +163,6 @@ public class InventoryPage extends BasePage {
 
         throw new IllegalArgumentException("Product not found: " + productName);
     }
+
+    protected abstract T self();
 }

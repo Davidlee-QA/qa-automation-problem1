@@ -1,0 +1,16 @@
+username,password,expectedMessageKey
+standard_user,wrong_password,invalidCredentials
+unknown_user,secret_sauce,invalidCredentials
+,secret_sauce,usernameRequired
+standard_user,,passwordRequired
+,,usernameRequired
+" standard_user ",secret_sauce,invalidCredentials
+standard_user," secret_sauce",invalidCredentials
+standard_user,"secret_sauce ",invalidCredentials
+STANDARD_USER,secret_sauce,invalidCredentials
+standard_user,SECRET_SAUCE,invalidCredentials
+standard_user@example.com,secret_sauce,invalidCredentials
+standard_user!,secret_sauce,invalidCredentials
+' OR '1'='1,secret_sauce,invalidCredentials
+{{longText}},secret_sauce,invalidCredentials
+standard_user,{{longText}},invalidCredentials
